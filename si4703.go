@@ -16,9 +16,14 @@ import (
 	"log"
 	"time"
 
-	"bitbucket.org/gmcbay/i2c"
+	// "bitbucket.org/gmcbay/i2c"
+
 	"github.com/mschoch/go-rds"
-	"github.com/stianeikeland/go-rpio"
+
+	// "github.com/stianeikeland/go-rpio"
+	"machine"
+
+	"tinygo.org/x/drivers"
 )
 
 const I2C_ADDR = 0x10
@@ -74,43 +79,37 @@ const RDSS uint16 = 11
 const STEREO uint16 = 8
 
 type Device struct {
-	bus       *i2c.I2CBus
-	busNum    byte
-	addr      byte
+	bus       drivers.I2C
+	addr      uint16
 	registers []uint16
 	rdsinfo   *rds.RDSInfo
+	reset     machine.Pin
 }
 
-func (d *Device) Init(busNum byte) (err error) {
-	return d.InitCustomAddr(I2C_ADDR, busNum)
+func New(bus drivers.I2C) Device {
+	return Device{
+		bus:       bus,
+		addr:      I2C_ADDR,
+		registers: make([]uint16, 16),
+		reset:     machine.Pin(machine.GPIO15),
+	}
 }
 
-func (d *Device) InitCustomAddr(addr, busNum byte) (err error) {
+func (d *Device) Configure() (err error) {
 	d.rdsinfo = rds.NewRDSInfo()
 
 	// do some manual GPIO to initialize the device
-	err = rpio.Open()
-	if err != nil {
-		return err
-	}
+	// err = rpio.Open()
+	// if err != nil {
+	// 	return err
+	// }
 
-	pin23 := rpio.Pin(23)
-	pin23.Output()
+	d.reset.Configure(machine.PinConfig{Mode: machine.PinOutput})
 
-	pin23.Low()
+	d.reset.Low()
 	time.Sleep(1 * time.Second)
-	pin23.High()
+	d.reset.High()
 	time.Sleep(1 * time.Second)
-
-	rpio.Close()
-
-	if d.bus, err = i2c.Bus(busNum); err != nil {
-		return
-	}
-
-	d.busNum = busNum
-	d.addr = addr
-	d.registers = make([]uint16, 16)
 
 	// read
 	d.readRegisters()
@@ -139,7 +138,7 @@ func (d *Device) InitCustomAddr(addr, busNum byte) (err error) {
 }
 
 func (d *Device) Close() error {
-	fmt.Printf("turning off chip")
+	println("turning off chip")
 	// read
 	d.readRegisters()
 	// disable the IC
@@ -179,9 +178,9 @@ func (d *Device) readRegisters() {
 	binary.Write(buf, binary.BigEndian, d.registers[0x2])
 	bufbytes := buf.Bytes()
 
-	var data []byte
+	data := make([]byte, 32)
 	var err error
-	if data, err = d.bus.ReadByteBlock(d.addr, bufbytes[0], 32); err != nil {
+	if err = d.bus.Tx(d.addr, bufbytes, data); err != nil {
 		return
 	}
 
@@ -214,9 +213,9 @@ func (d *Device) updateRegisters() {
 	}
 
 	bytes := p.Bytes()
-	//log.Printf("output bytes is %v", bytes)
+	log.Printf("output bytes is %v", bytes)
 
-	err := d.bus.WriteByteBlock(d.addr, bytes[0], bytes[1:])
+	err := d.bus.Tx(d.addr, bytes, bytes[1:])
 	if err != nil {
 		log.Printf("error writing: %v")
 	}
@@ -247,7 +246,7 @@ func (d *Device) SetChannel(channel uint16) {
 	d.registers[CHANNEL] = d.registers[CHANNEL] | newChannel
 	d.registers[CHANNEL] = d.registers[CHANNEL] | (1 << TUNE)
 
-	log.Printf("Attempting to tune")
+	log.Printf("Attempting to tune and fart")
 	d.updateRegisters()
 
 	// wait for tuning to complete
@@ -614,7 +613,7 @@ func (d *Device) PollRDS() {
 				// rv = rv + fmt.Sprintf("Program Type: %d\n", d.registers[RDSB]>>5&0x1F)
 				//fmt.Printf("%s", rv)
 				d.rdsinfo.Update(d.registers[RDSA], d.registers[RDSB], d.registers[RDSC], d.registers[RDSD])
-				log.Printf("%v\n", d.rdsinfo)
+				println("%v\n", d.rdsinfo)
 			}
 		}
 	}
