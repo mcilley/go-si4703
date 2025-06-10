@@ -12,11 +12,13 @@ package main
 import (
 	// "go-si4703"
 	"machine"
+
+	"github.com/mcilley/go-si4703"
 )
 
 func main() {
 	machine.I2C0.Configure(machine.I2CConfig{})
-	fm := New(machine.I2C0)
+	fm := si4703.New(machine.I2C0)
 	fm.Configure()
 	val := 90.9 * 10
 	freqint := uint16(val)
@@ -24,6 +26,5 @@ func main() {
 	fm.DisableMute()
 	fm.SetVolume(uint16(8))
 	fm.PollRDS()
-	println(fm.registers)
-
+	// println(fm.registers)
 }
