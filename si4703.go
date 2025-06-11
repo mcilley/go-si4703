@@ -12,7 +12,6 @@ package si4703
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -182,7 +181,7 @@ func (d *Device) readRegisters() {
 		return
 	}
 
-	//log.Printf("read bytes %v", data)
+	println("read bytes", data)
 
 	counter := 0
 	for x := 0x0A; ; x++ {
@@ -192,7 +191,7 @@ func (d *Device) readRegisters() {
 		p := bytes.NewBuffer(data[counter : counter+2])
 		err = binary.Read(p, binary.BigEndian, &d.registers[x])
 		if err != nil {
-			log.Printf("error reading: %v", err)
+			println("error reading:", err)
 			return
 		}
 		counter = counter + 2
@@ -201,7 +200,7 @@ func (d *Device) readRegisters() {
 		}
 	}
 
-	//log.Printf("self: %v", d)
+	println("self: ", d)
 }
 
 func (d *Device) updateRegisters() {
@@ -211,11 +210,11 @@ func (d *Device) updateRegisters() {
 	}
 
 	bytes := p.Bytes()
-	log.Printf("output bytes is %v", bytes)
+	println("output bytes is", bytes)
 
 	err := d.bus.Tx(d.addr, bytes, bytes[1:])
 	if err != nil {
-		log.Printf("error writing: %v")
+		println("error writing: ", err)
 	}
 
 	//d.readRegisters()
@@ -244,14 +243,14 @@ func (d *Device) SetChannel(channel uint16) {
 	d.registers[CHANNEL] = d.registers[CHANNEL] | newChannel
 	d.registers[CHANNEL] = d.registers[CHANNEL] | (1 << TUNE)
 
-	log.Printf("Attempting to tune and fart")
+	println("Attempting to tune and fart")
 	d.updateRegisters()
 
 	// wait for tuning to complete
 	for {
 		d.readRegisters()
 		if d.registers[STATUSRSSI]&(1<<STC) != 0 {
-			//log.Printf("Tuning Complete")
+			println("Tuning Complete")
 			break
 		}
 	}
@@ -267,21 +266,21 @@ func (d *Device) SetChannel(channel uint16) {
 	for {
 		d.readRegisters()
 		if d.registers[STATUSRSSI]&(1<<STC) == 0 {
-			//log.Printf("STC Cleared")
+			println("STC Cleared")
 			break
 		}
 	}
 
-	log.Printf("Tuned to %s", d.printReadChannel(d.registers[READCHAN]))
+	println("Tuned to ", d.printReadChannel(d.registers[READCHAN]))
 }
 
 func (d *Device) Seek(dir byte) {
 	d.readRegisters()
 	if dir == 1 {
-		log.Printf("Seeking UP")
+		println("Seeking UP")
 		d.registers[POWERCFG] = d.registers[POWERCFG] | (1 << SEEKUP)
 	} else {
-		log.Printf("Seeking DOWN")
+		println("Seeking DOWN")
 		d.registers[POWERCFG] = d.registers[POWERCFG] &^ (1 << SEEKUP)
 	}
 	d.registers[POWERCFG] = d.registers[POWERCFG] | (1 << SEEK)
@@ -294,7 +293,7 @@ func (d *Device) Seek(dir byte) {
 	for {
 		d.readRegisters()
 		if d.registers[STATUSRSSI]&(1<<STC) != 0 {
-			//log.Printf("Seek Complete")
+			println("Seek Complete")
 			break
 		}
 	}
@@ -309,11 +308,11 @@ func (d *Device) Seek(dir byte) {
 	for {
 		d.readRegisters()
 		if d.registers[STATUSRSSI]&(1<<STC) == 0 {
-			//log.Printf("STC Cleared")
+			println("STC Cleared")
 			break
 		}
 	}
-	log.Printf("Seeked to %s", d.printReadChannel(d.registers[READCHAN]))
+	println("Seeked to ", d.printReadChannel(d.registers[READCHAN]))
 }
 
 func (d *Device) String() string {
