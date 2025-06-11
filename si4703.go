@@ -524,6 +524,7 @@ func (d *Device) printChannelNumber(channel uint16) string {
 		freq := (float64(spacing) * float64(channel)) + 76.0
 		rv.WriteString(strconv.FormatFloat(freq, 'f', 2, 64))
 		rv.WriteString("MHz")
+		return rv.String()
 	default:
 		return "Unknown"
 	}

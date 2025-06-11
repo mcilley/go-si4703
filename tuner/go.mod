@@ -2,7 +2,7 @@ module go-si4703/tuner
 
 go 1.23.7
 
-require github.com/mcilley/go-si4703 v0.0.0-20250610011455-7b63af2e8267
+require github.com/mcilley/go-si4703 v0.0.0-20250611024315-45342c960cd0
 
 require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect

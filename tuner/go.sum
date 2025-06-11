@@ -1,7 +1,7 @@
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
-github.com/mcilley/go-si4703 v0.0.0-20250610011455-7b63af2e8267 h1:T+6g97vcNpbu4WRFBGeU2T1SPCFR6kAiM2TliM/7qCU=
-github.com/mcilley/go-si4703 v0.0.0-20250610011455-7b63af2e8267/go.mod h1:IywgGC6uKLtv7OC/Moc8ojRLHrjbjm79SwkQVe0rFVQ=
+github.com/mcilley/go-si4703 v0.0.0-20250611024315-45342c960cd0 h1:ACv0YRfq7cowfMVT5yj7tDhisJJhqS9uCa+LIWe3opU=
+github.com/mcilley/go-si4703 v0.0.0-20250611024315-45342c960cd0/go.mod h1:IywgGC6uKLtv7OC/Moc8ojRLHrjbjm79SwkQVe0rFVQ=
 github.com/mschoch/go-rds v0.0.0-20131005155803-a554a3b0e6c9 h1:byKhMQg6CFU0FO61ZItnH4dHsfKlWi5vJv6OH0HIosA=
 github.com/mschoch/go-rds v0.0.0-20131005155803-a554a3b0e6c9/go.mod h1:83pbIZL/E4li9yTtQjr14OwnsRt/KDoOS5lVxxPhtkM=
 tinygo.org/x/drivers v0.31.0 h1:Q2RpvTRMtdmjHD2Xyn4e8WXsJZKpIny3Lg4hzG1dLu4=
