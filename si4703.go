@@ -12,15 +12,13 @@ package si4703
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
-
-	// "bitbucket.org/gmcbay/i2c"
 
 	"github.com/mschoch/go-rds"
 
-	// "github.com/stianeikeland/go-rpio"
 	"machine"
 
 	"tinygo.org/x/drivers"
@@ -336,10 +334,14 @@ func (d *Device) String() string {
 }
 
 func (d *Device) printDeviceID(deviceid uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("Part Number: %s\n", d.printPartNumber(byte(deviceid>>12)))
-	rv = rv + fmt.Sprintf("Manufacturer: 0x%x\n", deviceid&0xFFF)
-	return rv
+	var rv strings.Builder
+	rv.WriteString("part Number: ")
+	rv.WriteString(d.printPartNumber(byte(deviceid >> 12)))
+	rv.WriteString("\n")
+	rv.WriteString("Manufacturer: 0x")
+	rv.WriteString(strconv.Itoa(int(deviceid & 0xFFF)))
+	rv.WriteString("\n")
+	return rv.String()
 }
 
 func (d *Device) printPartNumber(num byte) string {
@@ -352,12 +354,18 @@ func (d *Device) printPartNumber(num byte) string {
 }
 
 func (d *Device) printChipID(chipid uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("Chip Version: %s\n", d.printChipVersion(byte(chipid>>10)))
-	rv = rv + fmt.Sprintf("Device: %s\n", d.printDevice(byte((chipid&0x1FF)>>6)))
-	rv = rv + fmt.Sprintf("Firmware Version %s\n", d.printFirmwareVersion(byte(chipid&0x1F)))
+	var rv strings.Builder
+	rv.WriteString("Chip Version: ")
+	rv.WriteString(d.printChipVersion(byte(chipid >> 10)))
+	rv.WriteString("\n")
+	rv.WriteString("Device: ")
+	rv.WriteString(d.printDevice(byte((chipid & 0x1FF) >> 6)))
+	rv.WriteString("\n")
+	rv.WriteString("Firmware Version: ")
+	rv.WriteString(d.printFirmwareVersion(byte(chipid & 0x1F)))
+	rv.WriteString("\n")
 
-	return rv
+	return rv.String()
 }
 
 func (d *Device) printChipVersion(rev byte) string {
@@ -385,26 +393,47 @@ func (d *Device) printDevice(dev byte) string {
 }
 
 func (d *Device) printFirmwareVersion(rev byte) string {
+	var rv strings.Builder
 	switch rev {
 	case 0x0:
 		return "Off"
 	default:
-		return fmt.Sprintf("%v", rev)
+		rv.WriteByte(rev)
+		return rv.String()
 	}
 }
 
 func (d *Device) printPowerCfg(powercfg uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("Soft Mute: %s\n", d.printMute(byte(powercfg>>SMUTE)))
-	rv = rv + fmt.Sprintf("Mute: %s\n", d.printMute(byte(powercfg>>DMUTE&0x1)))
-	rv = rv + fmt.Sprintf("Force Mono: %s\n", d.printEnabled(byte(powercfg>>FORCEMONO&0x1)))
-	rv = rv + fmt.Sprintf("RDS Mode: %s\n", d.printRDSMode(byte(powercfg>>RDSMODE&0x1)))
-	rv = rv + fmt.Sprintf("Seek Mode: %s\n", d.printSeekMode(byte(powercfg>>SKMODE&0x1)))
-	rv = rv + fmt.Sprintf("Seek Direction: %s\n", d.printSeekDirection(byte(powercfg>>SEEKUP&0x1)))
-	rv = rv + fmt.Sprintf("Seek: %s\n", d.printEnabled(byte(powercfg>>SEEK&0x1)))
-	rv = rv + fmt.Sprintf("Power-Up Disable: %s\n", d.printPower(byte(powercfg&0x3f)>>6))
-	rv = rv + fmt.Sprintf("Power-Up Enable: %s\n", d.printPower(byte(powercfg&0x1)))
-	return rv
+	var rv strings.Builder
+	rv.WriteString("Soft Mute: ")
+	rv.WriteString(d.printMute(byte(powercfg >> SMUTE)))
+	rv.WriteString("\n")
+	rv.WriteString("Mute: ")
+	rv.WriteString(d.printMute(byte(powercfg >> DMUTE & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Force Mono: ")
+	rv.WriteString(d.printEnabled(byte(powercfg >> FORCEMONO & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("RDS Mode: ")
+	rv.WriteString(d.printRDSMode(byte(powercfg >> RDSMODE & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Seek Mode: ")
+	rv.WriteString(d.printSeekMode(byte(powercfg >> SKMODE & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Seek Direction: ")
+	rv.WriteString(d.printSeekDirection(byte(powercfg >> SEEKUP & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Seek: ")
+	rv.WriteString(d.printEnabled(byte(powercfg >> SEEK & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Power-Up Disable: ")
+	rv.WriteString(d.printPower(byte(powercfg&0x3f) >> 6))
+	rv.WriteString("\n")
+	rv.WriteString("Power-Up Enable: ")
+	rv.WriteString(d.printPower(byte(powercfg & 0x1)))
+	rv.WriteString("\n")
+
+	return rv.String()
 }
 
 func (d *Device) printMute(mute byte) string {
@@ -471,23 +500,31 @@ func (d *Device) printPower(power byte) string {
 }
 
 func (d *Device) printChannel(tune uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("Tune: %s\n", d.printEnabled(byte(tune>>15)))
-	rv = rv + fmt.Sprintf("Tune Channel: %s\n", d.printChannelNumber(tune&0x1FF))
+	var rv strings.Builder
+	rv.WriteString("Tune: ")
+	rv.WriteString(d.printEnabled(byte(tune >> TUNE)))
+	rv.WriteString("\n")
+	rv.WriteString("Tune Channel: ")
+	rv.WriteString(d.printChannelNumber(tune & 0x1FF))
+	rv.WriteString("\n")
 
-	return rv
+	return rv.String()
 }
 
 func (d *Device) printChannelNumber(channel uint16) string {
+	var rv strings.Builder
 	band := 0      // FIXME use actual band
 	spacing := 200 // FIXME use actual spacing
 	switch band {
 	case 0:
 		freq := ((float64(channel) * 20) + 8750) / 100
-		return fmt.Sprintf("%fMHz", freq)
+		rv.WriteString(strconv.FormatFloat(freq, 'f', 2, 64))
+		rv.WriteString("MHz")
+		return rv.String()
 	case 1:
 		freq := (float64(spacing) * float64(channel)) + 76.0
-		return fmt.Sprintf("%fMHz", freq)
+		rv.WriteString(strconv.FormatFloat(freq, 'f', 2, 64))
+		rv.WriteString("MHz")
 	default:
 		return "Unknown"
 	}
@@ -496,9 +533,9 @@ func (d *Device) printChannelNumber(channel uint16) string {
 func (d *Device) printDeemphasis(de byte) string {
 	switch de {
 	case 0:
-		return fmt.Sprintf("75μs")
+		return "75μs"
 	case 1:
-		return fmt.Sprintf("50μs")
+		return "50μs"
 	default:
 		return "Unknown"
 	}
@@ -507,27 +544,40 @@ func (d *Device) printDeemphasis(de byte) string {
 func (d *Device) printSMBlend(blndadj byte) string {
 	switch blndadj {
 	case 0:
-		return fmt.Sprintf("31–49 RSSI dBµV (default)")
+		return "31–49 RSSI dBµV (default)"
 	case 1:
-		return fmt.Sprintf("37–55 RSSI dBµV (+6 dB)")
+		return "37–55 RSSI dBµV (+6 dB)"
 	case 2:
-		return fmt.Sprintf("19–37 RSSI dBµV (–12 dB)")
+		return "19–37 RSSI dBµV (–12 dB)"
 	case 3:
-		return fmt.Sprintf("25–43 RSSI dBµV (–6 dB)")
+		return "25–43 RSSI dBµV (–6 dB)"
 	default:
 		return "Unknown"
 	}
 }
 
 func (d *Device) printSysConfig1(sysconf uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("RDS Interrupt: %s\n", d.printEnabled(byte(sysconf>>RDSR)))
-	rv = rv + fmt.Sprintf("Seek/Tune Complete Interrupt: %s\n", d.printEnabled(byte(sysconf>>STC&0x1)))
-	rv = rv + fmt.Sprintf("RDS: %s\n", d.printEnabled(byte(sysconf>>RDS&0x1)))
-	rv = rv + fmt.Sprintf("De-emphasis: %s\n", d.printDeemphasis(byte(sysconf>>DE&0x1)))
-	rv = rv + fmt.Sprintf("AGC: %s\n", d.printEnabled(byte(sysconf>>AGC&0x1)))
-	rv = rv + fmt.Sprintf("Stereo/Mono Blend Adjustment: %s\n", d.printSMBlend(byte(sysconf>>BLNDADJ&0x3)))
-	return rv
+	var rv strings.Builder
+	rv.WriteString("RDS Interrupt: ")
+	rv.WriteString(d.printEnabled(byte(sysconf >> RDSR)))
+	rv.WriteString("\n")
+	rv.WriteString("Seek/Tune Complete Interrupt: ")
+	rv.WriteString(d.printEnabled(byte(sysconf >> STC & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("RDS: ")
+	rv.WriteString(d.printEnabled(byte(sysconf >> RDS & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("De-emphasis: ")
+	rv.WriteString(d.printDeemphasis(byte(sysconf >> DE & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("AGC: ")
+	rv.WriteString(d.printEnabled(byte(sysconf >> AGC & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Stereo/Mono Blend Adjustment: ")
+	rv.WriteString(d.printSMBlend(byte(sysconf >> BLNDADJ & 0x3)))
+	rv.WriteString("\n")
+
+	return rv.String()
 }
 
 func (d *Device) printRDSReady(rdsr byte) string {
@@ -576,21 +626,40 @@ func (d *Device) printSynchronized(rdss byte) string {
 }
 
 func (d *Device) printStatusRSSI(status uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("RDS Ready: %s\n", d.printRDSReady(byte(status>>RDSR)))
-	rv = rv + fmt.Sprintf("Seek/Tune Complete: %s\n", d.printComplete(byte(status>>STC&0x1)))
-	rv = rv + fmt.Sprintf("Seek Fail/Band Limit: %s\n", d.printSeekFailBandLimit(byte(status>>SFBL&0x1)))
-	rv = rv + fmt.Sprintf("AFC Rail: %s\n", d.printAFCRail(byte(status>>AFCRL&0x1)))
-	rv = rv + fmt.Sprintf("RDS Synchronized: %s\n", d.printSynchronized(byte(status>>RDSS&0x1)))
-	rv = rv + fmt.Sprintf("Stereo/Mono: %s\n", d.printStereoMonoActual(byte(status>>STEREO&0x1)))
-	rv = rv + fmt.Sprintf("RSSI: %ddBµV\n", status&0x7F)
-	return rv
+	var rv strings.Builder
+
+	rv.WriteString("RDS Ready: ")
+	rv.WriteString(d.printRDSReady(byte(status >> RDSR)))
+	rv.WriteString("\n")
+	rv.WriteString("Seek/Tune Complete: ")
+	rv.WriteString(d.printComplete(byte(status >> STC & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Seek Fail/Band Limit: ")
+	rv.WriteString(d.printSeekFailBandLimit(byte(status >> SFBL & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("AFC Rail: ")
+	rv.WriteString(d.printAFCRail(byte(status >> AFCRL & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("RDS Synchronized: ")
+	rv.WriteString(d.printSynchronized(byte(status >> RDSS & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("Stereo/Mono: ")
+	rv.WriteString(d.printStereoMonoActual(byte(status >> STEREO & 0x1)))
+	rv.WriteString("\n")
+	rv.WriteString("RSSI: ")
+	rv.WriteString(strconv.Itoa(int(status & 0x7F)))
+	rv.WriteString("dBµV")
+	rv.WriteString("\n")
+
+	return rv.String()
 }
 
 func (d *Device) printReadChannel(readChannel uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("Channel: %s\n", d.printChannelNumber(readChannel&0x1FF))
-	return rv
+	var rv strings.Builder
+	rv.WriteString("Channel: ")
+	rv.WriteString(d.printChannelNumber(readChannel & 0x1FF))
+	rv.WriteString("\n")
+	return rv.String()
 }
 
 func (d *Device) PollRDS() {
@@ -620,7 +689,11 @@ func (d *Device) PollRDS() {
 }
 
 func (d *Device) printRDS(prefix string, rds uint16) string {
-	rv := ""
-	rv = rv + fmt.Sprintf("%s: %s%s\n", prefix, string(rds>>8), string(rds&0xFF))
-	return rv
+	var rv strings.Builder
+	rv.WriteString(prefix)
+	rv.WriteString(": ")
+	rv.WriteString(string(rds >> 8))
+	rv.WriteString(string(rds & 0xFF))
+	rv.WriteString("\n")
+	return rv.String()
 }
