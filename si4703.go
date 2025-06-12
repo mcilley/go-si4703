@@ -88,7 +88,7 @@ func New(bus drivers.I2C) Device {
 		bus:       bus,
 		addr:      I2C_ADDR,
 		registers: make([]uint16, 16),
-		reset:     machine.Pin(machine.D10),
+		reset:     machine.Pin(machine.GPIO15),
 	}
 }
 
